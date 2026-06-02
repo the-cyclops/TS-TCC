@@ -1,0 +1,42 @@
+
+Repository: TS-TCC
+Purpose: Short descriptions of what each folder/file in this repository is responsible for.
+
+Top-level files
+- main.py: Project entrypoint / example runner (calls training or evaluation pipelines).
+- utils.py: Helper utilities and shared functions used across modules.
+- README.md: Project overview and usage instructions.
+- LICENSE.txt: License for the project.
+- note.txt: This summary file.
+
+Folders
+- config_files/: Dataset- and experiment-specific configuration modules. Contains:
+	- Epilepsy_Configs.py — configs for epilepsy dataset experiments.
+	- HAR_Configs.py — configs for UCI HAR experiments.
+	- pFD_Configs.py — configs for the fault-diagnosis dataset.
+	- sleepEDF_Configs.py — configs for Sleep-EDF experiments.
+
+- data_preprocessing/: Scripts to preprocess raw datasets before training. Subfolders:
+	- epilepsy/: `preprocess.py` and `data_files/data.csv` — epilepsy-specific preprocessing and example data.
+	- fault_diagnosis/: MATLAB and notebook utilities for loading and segmenting fault-diagnosis data.
+	- sleep-edf/: EDF reader and scripts (`dhedfreader.py`, `generate_train_val_test.py`, `preprocess_sleep_edf.py`) to prepare Sleep-EDF splits.
+      EDF is standard european medical time series data format.
+	- uci_har/: `preprocess_har.py` for preprocessing UCI HAR dataset.
+
+- dataloader/: Data loading and augmentation code used by training pipelines:
+	- augmentations.py — data augmentation transforms (strong/weak augmentations used in contrastive setups).
+	- dataloader.py — dataset and DataLoader wrappers (batching, windowing, sampling).
+
+- models/: Model definitions and loss modules:
+	- model.py — primary model architecture used in experiments.
+	- TC.py —  loss functions for Temporal Contrasting.
+	- attention.py — attention mechanism(s) used by the model.
+	- loss.py — loss functions for Contextual Contrasting.
+
+- trainer/: Training orchestration and utilities:
+	- trainer.py — training loop, validation, checkpoint save/load, metric logging.
+
+- misc/: Miscellaneous utilities and helpers (currently empty or placeholder).
+
+Notes / next steps
+- If you want, I can expand any folder entry into per-file descriptions, show call graphs, or open specific files and annotate them inline.

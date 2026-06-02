@@ -1,5 +1,6 @@
 from torch import nn
-
+# Encoder + Linear classifier for TS-TCC
+# When in downstream task, this is the only model that will be used, no tranformer or projection head
 class base_Model(nn.Module):
     def __init__(self, configs):
         super(base_Model, self).__init__()
@@ -37,4 +38,5 @@ class base_Model(nn.Module):
 
         x_flat = x.reshape(x.shape[0], -1)
         logits = self.logits(x_flat)
+        # logits is the output of the linear classifier, x is z in the paper
         return logits, x

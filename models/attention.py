@@ -5,7 +5,7 @@ from einops import rearrange, repeat
 
 
 ########################################################################################
-
+# fn is a nn block, in this case it will be norm+attention
 class Residual(nn.Module):
     def __init__(self, fn):
         super().__init__()
@@ -14,7 +14,7 @@ class Residual(nn.Module):
     def forward(self, x, **kwargs):
         return self.fn(x, **kwargs) + x
 
-
+# here fn will be attetion
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
         super().__init__()
@@ -39,7 +39,7 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-
+# standard attention module
 class Attention(nn.Module):
     def __init__(self, dim, heads=8, dropout=0.):
         super().__init__()
@@ -90,12 +90,14 @@ class Transformer(nn.Module):
             x = ff(x)
         return x
 
-
+# this is the whole block of tranformer 
 class Seq_Transformer(nn.Module):
     def __init__(self, *, patch_size, dim, depth, heads, mlp_dim, channels=1, dropout=0.1):
         super().__init__()
         patch_dim = channels * patch_size
+        # linear projection (Batch, Num_Patches, patch_dim) -> (Batch, Num_Patches, dim)
         self.patch_to_embedding = nn.Linear(patch_dim, dim)
+
         self.c_token = nn.Parameter(torch.randn(1, 1, dim))
         self.transformer = Transformer(dim, depth, heads, mlp_dim, dropout)
         self.to_c_token = nn.Identity()
@@ -104,8 +106,14 @@ class Seq_Transformer(nn.Module):
     def forward(self, forward_seq):
         x = self.patch_to_embedding(forward_seq)
         b, n, _ = x.shape
+
+        # (1, 1, dim) -> (b, 1, dim)
         c_tokens = repeat(self.c_token, '() n d -> b n d', b=b)
+
+        # concatenate c_token to the beginning of the sequence
+        # x (Batch, Num_Patches, dim) -> (Batch, 1 + Num_Patches, dim)
         x = torch.cat((c_tokens, x), dim=1)
+
         x = self.transformer(x)
         c_t = self.to_c_token(x[:, 0])
         return c_t

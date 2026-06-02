@@ -66,12 +66,10 @@ def model_train(model, temporal_contr_model, model_optimizer, temp_cont_optimize
             features1 = F.normalize(features1, dim=1)
             features2 = F.normalize(features2, dim=1)
 
-            temp_cont_loss1, temp_cont_lstm_feat1 = temporal_contr_model(features1, features2)
-            temp_cont_loss2, temp_cont_lstm_feat2 = temporal_contr_model(features2, features1)
+            # TC loss, zis/zjs are c_t's after non-linear projection head
+            temp_cont_loss1, zis = temporal_contr_model(features1, features2)
+            temp_cont_loss2, zjs = temporal_contr_model(features2, features1)
 
-            # normalize projection feature vectors
-            zis = temp_cont_lstm_feat1 
-            zjs = temp_cont_lstm_feat2 
 
         else:
             output = model(data)

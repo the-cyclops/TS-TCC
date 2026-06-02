@@ -30,6 +30,7 @@ class Load_Dataset(Dataset):
 
         self.len = X_train.shape[0]
         if training_mode == "self_supervised":  # no need to apply Augmentations in other modes
+                                                # only for self-supervised learning following the TS-TCC framework
             self.aug1, self.aug2 = DataTransform(self.x_data, config)
 
     def __getitem__(self, index):
