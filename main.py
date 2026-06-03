@@ -48,7 +48,7 @@ run_description = args.run_description
 logs_save_dir = args.logs_save_dir
 os.makedirs(logs_save_dir, exist_ok=True)
 
-
+# open the config file for the selected dataset with data_type
 exec(f'from config_files.{data_type}_Configs import Config as Configs')
 configs = Configs()
 
@@ -83,9 +83,14 @@ train_dl, valid_dl, test_dl = data_generator(data_path, configs, training_mode)
 logger.debug("Data loaded ...")
 
 # Load Model
+# encoder + linear classifier
 model = base_Model(configs).to(device)
+# temporal contrastive learning model (with transformer and projection head)
 temporal_contr_model = TC(configs, device).to(device)
 
+# Semi-supervised Training in paper at 5.2 & Transfer Learning Experiment at 5.3
+# fine tuning after self-supervised pretraining, no parameter are frozen in this mode
+# For Transfer Learning, this mode is applied to the 'pFD' dataset to fine-tune the pretrained encoder on the source domain.
 if training_mode == "fine_tune":
     # load saved model of this experiment
     load_from = os.path.join(os.path.join(logs_save_dir, experiment_description, run_description, f"self_supervised_seed_{SEED}", "saved_models"))
@@ -101,6 +106,8 @@ if training_mode == "fine_tune":
     model_dict.update(pretrained_dict)
     model.load_state_dict(model_dict)
 
+# Linear evaluation in paper at 5.1
+# freeze all parameters except the last linear layer for linear evaluation of the pretrained model
 if training_mode == "train_linear" or "tl" in training_mode:
     load_from = os.path.join(os.path.join(logs_save_dir, experiment_description, run_description, f"self_supervised_seed_{SEED}", "saved_models"))
     chkpoint = torch.load(os.path.join(load_from, "ckp_last.pt"), map_location=device)
@@ -122,6 +129,8 @@ if training_mode == "train_linear" or "tl" in training_mode:
     model.load_state_dict(model_dict)
     set_requires_grad(model, pretrained_dict, requires_grad=False)  # Freeze everything except last layer.
 
+# Baseline in paper at 5.1 
+# Random inizialization with only the linear layer trainable, everything else is frozen
 if training_mode == "random_init":
     model_dict = model.state_dict()
 

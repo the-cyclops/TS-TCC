@@ -43,6 +43,8 @@ class TC(nn.Module):
         t_samples = torch.randint(seq_len - self.timestep, size=(1,)).long().to(self.device)  #t_samples + timestep < seq_len
 
         # Noise contrastive estimation (InfoNCE), is the TC loss
+        # InfoNCE is a cross entropy with softmax that consider as true label the positive pair (predicted future from weak view and actual future from strong view) 
+        # among all negative pairs in the batch (other predicted futures and actual futures that do not match)
         nce = 0 
 
         # encode_samples shape: (timestep, batch, #channels) -> stores future true samples from strong view

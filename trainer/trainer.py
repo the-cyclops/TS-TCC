@@ -11,12 +11,12 @@ import torch.nn.functional as F
 from models.loss import NTXentLoss
 
 
-
+# model is base model (encoder + linear classifier) and temporal_contr_model is the TC module with transformer and projection head
 def Trainer(model, temporal_contr_model, model_optimizer, temp_cont_optimizer, train_dl, valid_dl, test_dl, device, logger, config, experiment_log_dir, training_mode):
     # Start training
     logger.debug("Training started ....")
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss() # used only for supervised training and fine-tuning, not used for self-supervised pretraining.
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(model_optimizer, 'min')
 
     for epoch in range(1, config.num_epoch + 1):
@@ -24,7 +24,7 @@ def Trainer(model, temporal_contr_model, model_optimizer, temp_cont_optimizer, t
         train_loss, train_acc = model_train(model, temporal_contr_model, model_optimizer, temp_cont_optimizer, criterion, train_dl, config, device, training_mode)
         valid_loss, valid_acc, _, _ = model_evaluate(model, temporal_contr_model, valid_dl, device, training_mode)
         if training_mode != 'self_supervised':  # use scheduler in all other modes.
-            scheduler.step(valid_loss)
+            scheduler.step(valid_loss) # cannot do this in self supervised since i would not have a valid_loss
 
         logger.debug(f'\nEpoch : {epoch}\n'
                      f'Train Loss     : {train_loss:.4f}\t | \tTrain Accuracy     : {train_acc:2.4f}\n'
@@ -74,15 +74,16 @@ def model_train(model, temporal_contr_model, model_optimizer, temp_cont_optimize
         else:
             output = model(data)
 
-        # compute loss
+        # compute loss for self supervised pretrain
         if training_mode == "self_supervised":
             lambda1 = 1
             lambda2 = 0.7
+            # Contextual contrasting loss
             nt_xent_criterion = NTXentLoss(device, config.batch_size, config.Context_Cont.temperature,
                                            config.Context_Cont.use_cosine_similarity)
             loss = (temp_cont_loss1 + temp_cont_loss2) * lambda1 +  nt_xent_criterion(zis, zjs) * lambda2
             
-        else: # supervised training or fine tuining
+        else: # supervised training or fine tuining uses cross entropy loss
             predictions, features = output
             loss = criterion(predictions, labels)
             total_acc.append(labels.eq(predictions.detach().argmax(dim=1)).float().mean())
