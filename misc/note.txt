@@ -1,9 +1,8 @@
-
 Repository: TS-TCC
 Purpose: Short descriptions of what each folder/file in this repository is responsible for.
 
 Top-level files
-- main.py: Project entrypoint / example runner (calls training or evaluation pipelines).
+- main.py: Project entrypoint. Handles different training modes: `self_supervised`, `fine_tune` (for semi-supervised and transfer learning, loading the pretrained encoder without the final linear layer), `train_linear` (linear evaluation with a frozen pretrained encoder), and `random_init` (baseline with a frozen random encoder and only the linear layer trainable).
 - utils.py: Helper utilities and shared functions used across modules.
 - README.md: Project overview and usage instructions.
 - LICENSE.txt: License for the project.
@@ -11,32 +10,28 @@ Top-level files
 
 Folders
 - config_files/: Dataset- and experiment-specific configuration modules. Contains:
-	- Epilepsy_Configs.py — configs for epilepsy dataset experiments.
-	- HAR_Configs.py — configs for UCI HAR experiments.
-	- pFD_Configs.py — configs for the fault-diagnosis dataset.
-	- sleepEDF_Configs.py — configs for Sleep-EDF experiments.
+    - Epilepsy_Configs.py — configs for epilepsy dataset experiments.
+    - HAR_Configs.py — configs for UCI HAR experiments.
+    - pFD_Configs.py — configs for the fault-diagnosis dataset.
+    - sleepEDF_Configs.py — configs for Sleep-EDF experiments.
 
 - data_preprocessing/: Scripts to preprocess raw datasets before training. Subfolders:
-	- epilepsy/: `preprocess.py` and `data_files/data.csv` — epilepsy-specific preprocessing and example data.
-	- fault_diagnosis/: MATLAB and notebook utilities for loading and segmenting fault-diagnosis data.
-	- sleep-edf/: EDF reader and scripts (`dhedfreader.py`, `generate_train_val_test.py`, `preprocess_sleep_edf.py`) to prepare Sleep-EDF splits.
-      EDF is standard european medical time series data format.
-	- uci_har/: `preprocess_har.py` for preprocessing UCI HAR dataset.
+    - epilepsy/: `preprocess.py` and `data_files/data.csv` — epilepsy-specific preprocessing and example data.
+    - fault_diagnosis/: MATLAB and notebook utilities for loading and segmenting fault-diagnosis data.
+    - sleep-edf/: EDF reader and scripts (`dhedfreader.py`, `generate_train_val_test.py`, `preprocess_sleep_edf.py`) to prepare Sleep-EDF splits. EDF is standard european medical time series data format.
+    - uci_har/: `preprocess_har.py` for preprocessing UCI HAR dataset.
 
 - dataloader/: Data loading and augmentation code used by training pipelines:
-	- augmentations.py — data augmentation transforms (strong/weak augmentations used in contrastive setups).
-	- dataloader.py — dataset and DataLoader wrappers (batching, windowing, sampling).
+    - augmentations.py — Defines temporal augmentations for contrastive learning. Weak augmentation applies random temporal scaling. Strong augmentation applies random permutation (splitting time series into segments and shuffling them) followed by jitter (adding Gaussian noise).
+    - dataloader.py — Dataset and DataLoader wrappers. Applies augmentations to generate weak/strong pairs dynamically, but only when running in `self_supervised` mode.
 
 - models/: Model definitions and loss modules:
-	- model.py — primary model architecture used in experiments.
-	- TC.py —  loss functions for Temporal Contrasting.
-	- attention.py — attention mechanism(s) used by the model.
-	- loss.py — loss functions for Contextual Contrasting.
+    - model.py — The base model consisting of a 1D-CNN Encoder and a Linear classifier. In downstream tasks (supervised, fine-tuning, linear evaluation), this is the only model used, omitting the transformer and projection head.
+    - TC.py — Temporal Contrasting module. Uses a sequence transformer to generate a history context vector (`c_t`), predicts future steps, and computes the cross-view InfoNCE loss. Also includes a non-linear projection head to map the context into a lower-dimensional space for downstream Contextual Contrasting.
+    - attention.py — Implementation of standard Transformer blocks, multi-head attention, and `Seq_Transformer` which extracts the context using a prepended context token (`c_token`).
+    - loss.py — Implements Contextual Contrasting via Normalized Temperature-scaled Cross Entropy (NTXentLoss). Uses matrix masking to filter self/positive pairs, framing contrastive learning as a multi-class classification problem via PyTorch's CrossEntropyLoss.
 
 - trainer/: Training orchestration and utilities:
-	- trainer.py — training loop, validation, checkpoint save/load, metric logging.
+    - trainer.py — Handles the training loop and evaluation. Differentiates logic based on `training_mode`: computing combined Contextual and Temporal Contrastive losses for self-supervised pretraining, and standard Cross-Entropy for supervised fine-tuning.
 
 - misc/: Miscellaneous utilities and helpers (currently empty or placeholder).
-
-Notes / next steps
-- If you want, I can expand any folder entry into per-file descriptions, show call graphs, or open specific files and annotate them inline.
