@@ -2,6 +2,7 @@ import torch
 import numpy as np
 # Normalized Temperature-scaled Cross Entropy
 # this loss is for Contextual Contrasting
+# In input we will have the c_t after the non-linear projection head present in TC
 class NTXentLoss(torch.nn.Module):
 
     def __init__(self, device, batch_size, temperature, use_cosine_similarity):

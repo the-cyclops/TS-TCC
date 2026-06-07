@@ -28,7 +28,7 @@ class TC(nn.Module):
 
     def forward(self, features_aug1, features_aug2):
         z_aug1 = features_aug1  # features (weak) are (batch_size, #channels, seq_len)
-        # seq_len is T  in the paper, and both are > K (timestep) 
+        # seq_len is T  in the paper, timestep is K
         seq_len = z_aug1.shape[2]
         # Transpose to (batch_size, seq_len, #channels) for Transformer input compatibility
         z_aug1 = z_aug1.transpose(1, 2)
