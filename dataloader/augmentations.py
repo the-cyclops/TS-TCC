@@ -16,7 +16,7 @@ def jitter(x, sigma=0.8):
 
 # x is of shape (batch_size, num_channels, num_timesteps)
 # generate random scaling factor for each sample in batch at each timestep
-# then apply it for every channel of the sample
+# then apply the same scaling factor for every channel of the sample
 def scaling(x, sigma=1.1):
     # https://arxiv.org/pdf/1706.00527.pdf
     factor = np.random.normal(loc=2., scale=sigma, size=(x.shape[0], x.shape[2]))
